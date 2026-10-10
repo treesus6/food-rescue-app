@@ -79,5 +79,14 @@ create index claims_rescuer_idx on public.claims (rescuer_id, claimed_at desc);
 grant usage on schema public to anon, authenticated;
 grant select on public.community_fridges to anon, authenticated;
 grant select on public.food_listings to anon, authenticated;
-grant select, insert, update on public.profiles, public.donor_organizations, public.claims to authenticated;
+grant select, insert, update on public.profiles, public.claims to authenticated;
+-- Do not inherit broad hosted default privileges over verification columns.
+revoke insert, update on public.donor_organizations from public, anon, authenticated;
+grant select on public.donor_organizations to anon, authenticated;
+grant delete on public.donor_organizations to authenticated;
+-- Verification is an administrative assertion, never an owner-editable field.
+grant insert (id, owner_id, name, kind, address_text, latitude, longitude)
+  on public.donor_organizations to authenticated;
+grant update (name, kind, address_text, latitude, longitude)
+  on public.donor_organizations to authenticated;
 grant insert, update, delete on public.food_listings to authenticated;

@@ -1,8 +1,15 @@
 -- Atomic claim operation prevents two people from claiming the same food.
-create or replace function public.claim_food_rescue(p_listing_id uuid)
+-- The trusted writer lives outside exposed schemas. Its only input is a listing
+-- ID; the authenticated caller is always the rescuer. No general UPDATE/INSERT
+-- privilege is added to client roles to cross the donor/rescuer boundary.
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+
+create or replace function private.claim_food_rescue(p_listing_id uuid)
 returns public.claims
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
@@ -22,6 +29,16 @@ begin
   return v_claim;
 end;
 $$;
+
+revoke all on function private.claim_food_rescue(uuid) from public, anon;
+grant execute on function private.claim_food_rescue(uuid) to authenticated;
+
+create or replace function public.claim_food_rescue(p_listing_id uuid)
+returns public.claims
+language sql
+security invoker
+set search_path = ''
+as $$ select private.claim_food_rescue(p_listing_id); $$;
 
 revoke all on function public.claim_food_rescue(uuid) from public, anon;
 grant execute on function public.claim_food_rescue(uuid) to authenticated;

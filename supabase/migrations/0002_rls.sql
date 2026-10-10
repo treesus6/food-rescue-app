@@ -15,8 +15,22 @@ create policy "organizations_owner_update" on public.donor_organizations for upd
 create policy "organizations_owner_delete" on public.donor_organizations for delete to authenticated using ((select auth.uid()) = owner_id);
 
 create policy "listings_public_read" on public.food_listings for select to anon, authenticated using (status <> 'cancelled');
-create policy "listings_donor_insert" on public.food_listings for insert to authenticated with check ((select auth.uid()) = donor_id);
-create policy "listings_donor_update" on public.food_listings for update to authenticated using ((select auth.uid()) = donor_id) with check ((select auth.uid()) = donor_id);
+create policy "listings_donor_insert" on public.food_listings for insert to authenticated with check (
+  (select auth.uid()) = donor_id and (
+    organization_id is null or exists (
+      select 1 from public.donor_organizations o
+      where o.id = organization_id and o.owner_id = (select auth.uid())
+    )
+  )
+);
+create policy "listings_donor_update" on public.food_listings for update to authenticated using ((select auth.uid()) = donor_id) with check (
+  (select auth.uid()) = donor_id and (
+    organization_id is null or exists (
+      select 1 from public.donor_organizations o
+      where o.id = organization_id and o.owner_id = (select auth.uid())
+    )
+  )
+);
 create policy "listings_donor_delete" on public.food_listings for delete to authenticated using ((select auth.uid()) = donor_id);
 
 create policy "claims_participant_read" on public.claims for select to authenticated using ((select auth.uid()) = rescuer_id or exists (select 1 from public.food_listings l where l.id = listing_id and l.donor_id = (select auth.uid())));
