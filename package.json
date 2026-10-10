@@ -1,0 +1,15 @@
+{
+  "name": "food-rescue-app",
+  "version": "1.0.0",
+  "description": "Food Rescue connects restaurants, grocery stores, farms, and neighbors with people and community fridges that can use safe surplus food.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}
